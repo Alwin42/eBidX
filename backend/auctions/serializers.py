@@ -77,6 +77,7 @@ class AuctionItemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop("uploaded_images", [])
+        # Note: The ViewSet MUST inject the 'seller' into validated_data via serializer.save(seller=request.user)
         auction = AuctionItem.objects.create(**validated_data)
 
         for index, img in enumerate(uploaded_images):
@@ -124,6 +125,8 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        validated_data.pop("password_confirm", None)
+
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],

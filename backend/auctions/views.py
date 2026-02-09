@@ -17,9 +17,6 @@ from .serializers import (
     NotificationSerializer,
 )
 from django.contrib.auth.models import User
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.views import OAuth2Client
-from dj_rest_auth.registration.views import SocialLoginView
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -287,9 +284,3 @@ class CreateStripeCheckoutSession(APIView):
             return Response({"clientSecret": intent.client_secret})
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class GoogleLogin(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
-    client_class = OAuth2Client
-    callback_url = "postmessage"

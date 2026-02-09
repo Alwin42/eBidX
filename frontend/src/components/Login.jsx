@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Container, Form, Button, Card, Alert } from "react-bootstrap";
-import { useGoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
 
   const handleManualLogin = async (e) => {
     e.preventDefault();
@@ -20,53 +23,23 @@ const Login = () => {
         password: password,
       });
 
-      const token = res.data.key || res.data.token;
-      const userId = res.data.user_id || res.data.user;
+      const { token, user_id, username: returnedUsername } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user_id", userId);
-
-      if (res.data.username || username) {
-        localStorage.setItem("username", res.data.username || username);
+      if (!token || !user_id) {
+        throw new Error("Invalid response from server");
       }
 
+      localStorage.setItem("token", token);
+      localStorage.setItem("user_id", user_id);
+      localStorage.setItem("username", returnedUsername);
+
+      console.log("Login Successful:", returnedUsername);
       navigate("/");
     } catch (err) {
-      console.error(err);
+      console.error("Login Error:", err);
       setError("Invalid username or password");
     }
   };
-
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      try {
-        const res = await axios.post("http://127.0.0.1:8000/api/auth/google/", {
-          code: codeResponse.code,
-        });
-
-        const token = res.data.key;
-        const userId = res.data.user;
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("user_id", userId);
-
-        if (res.data.username) {
-          localStorage.setItem("username", res.data.username);
-        }
-
-        navigate("/");
-      } catch (err) {
-        console.error("Google Login Backend Error", err);
-        if (err.response && err.response.status === 400) {
-          setError("Account not found. Please Register first.");
-        } else {
-          setError("Google Login failed. Please try again.");
-        }
-      }
-    },
-    onError: () => setError("Google Login Failed"),
-  });
 
   return (
     <Container
@@ -104,27 +77,6 @@ const Login = () => {
               Login
             </Button>
           </Form>
-
-          <div className="d-flex align-items-center my-4">
-            <hr className="flex-grow-1" />
-            <span className="mx-2 text-muted small">OR</span>
-            <hr className="flex-grow-1" />
-          </div>
-
-          <div className="d-flex justify-content-center mb-3">
-            <Button
-              variant="light"
-              className="w-100 border d-flex align-items-center justify-content-center gap-2"
-              onClick={() => googleLogin()}
-            >
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-                alt="Google"
-                style={{ width: "20px" }}
-              />
-              Sign in with Google
-            </Button>
-          </div>
 
           <div className="w-100 text-center mt-3">
             <small>

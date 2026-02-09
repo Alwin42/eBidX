@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Container, Form, Button, Card, Alert } from "react-bootstrap";
-import { useGoogleLogin } from "@react-oauth/google";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +13,10 @@ const Register = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,49 +34,26 @@ const Register = () => {
 
     try {
       await axios.post("http://127.0.0.1:8000/api/register/", formData);
+
       setSuccess("Registration successful! Redirecting to Login...");
 
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (err) {
-      if (err.response && err.response.data.password) {
-        setError(err.response.data.password[0]);
-      } else if (err.response && err.response.data.username) {
+      console.error("Registration Error:", err);
+      const data = err.response?.data;
+      if (data?.password) {
+        setError(data.password[0]);
+      } else if (data?.username) {
         setError("Username is already taken.");
+      } else if (data?.email) {
+        setError("Account with this email already exists.");
       } else {
-        setError("Registration failed.");
+        setError("Registration failed. Please try again.");
       }
     }
   };
-
-  const googleRegister = useGoogleLogin({
-    flow: "auth-code",
-    onSuccess: async (codeResponse) => {
-      try {
-        const res = await axios.post("http://127.0.0.1:8000/api/auth/google/", {
-          code: codeResponse.code,
-          process: "register",
-        });
-
-        localStorage.setItem("token", res.data.key);
-        localStorage.setItem("user_id", res.data.user);
-
-        if (res.data.username) {
-          localStorage.setItem("username", res.data.username);
-        }
-
-        navigate("/");
-      } catch (err) {
-        console.error("Google Register Error:", err);
-        setError(
-          "Registration Failed. " +
-            (err.response?.data?.non_field_errors?.[0] || ""),
-        );
-      }
-    },
-    onError: () => setError("Google Registration Failed"),
-  });
 
   return (
     <Container className="mt-5" style={{ maxWidth: "500px" }}>
@@ -129,27 +109,6 @@ const Register = () => {
                 Register
               </Button>
             </Form>
-
-            <div className="d-flex align-items-center my-4">
-              <hr className="flex-grow-1" />
-              <span className="mx-2 text-muted small">OR</span>
-              <hr className="flex-grow-1" />
-            </div>
-
-            <div className="d-flex justify-content-center mb-3">
-              <Button
-                variant="light"
-                className="w-100 border d-flex align-items-center justify-content-center gap-2"
-                onClick={() => googleRegister()}
-              >
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-                  alt="Google"
-                  style={{ width: "20px" }}
-                />
-                Register with Google
-              </Button>
-            </div>
           </>
         )}
 

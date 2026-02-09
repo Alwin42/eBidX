@@ -13,7 +13,6 @@ from .views import (
     DeleteNotification,
     ClearAllNotifications,
     CreateStripeCheckoutSession,
-    GoogleLogin,
 )
 
 urlpatterns = [
@@ -38,5 +37,4 @@ urlpatterns = [
     path("notifications/<int:pk>/delete/", DeleteNotification.as_view()),
     path("notifications/clear-all/", ClearAllNotifications.as_view()),
     path("create-payment-intent/", CreateStripeCheckoutSession.as_view()),
-    path("auth/google/", GoogleLogin.as_view(), name="google_login"),
 ]
