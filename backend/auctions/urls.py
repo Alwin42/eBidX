@@ -13,6 +13,9 @@ from .views import (
     DeleteNotification,
     ClearAllNotifications,
     CreateStripeCheckoutSession,
+    EndAuctionEarly,
+    MarkAuctionPaid,
+    AuctionHomeSections,
 )
 
 urlpatterns = [
@@ -37,4 +40,7 @@ urlpatterns = [
     path("notifications/<int:pk>/delete/", DeleteNotification.as_view()),
     path("notifications/clear-all/", ClearAllNotifications.as_view()),
     path("create-payment-intent/", CreateStripeCheckoutSession.as_view()),
+    path("auctions/<int:pk>/end/", EndAuctionEarly.as_view(), name="end-auction-early"),
+    path("auctions/<int:pk>/mark-paid/", MarkAuctionPaid.as_view(), name="mark-paid"),
+    path("home-sections/", AuctionHomeSections.as_view(), name="home-sections"),
 ]
