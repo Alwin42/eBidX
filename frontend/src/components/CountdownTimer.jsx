@@ -34,19 +34,23 @@ const CountdownTimer = ({ targetDate }) => {
     if (!timeLeft[interval] && interval !== "seconds") return;
 
     timerComponents.push(
-      <span key={interval} className="mx-1">
-        <span className="fw-bold fs-4">{timeLeft[interval]}</span>
-        <span className="small text-uppercase">{interval}</span>
+      <span key={interval} className="mx-1 flex flex-col items-center">
+        <span className="font-bold text-2xl leading-none">{timeLeft[interval]}</span>
+        <span className="text-[10px] uppercase tracking-tighter opacity-80">{interval}</span>
       </span>,
     );
   });
 
   return (
-    <div className="text-center p-3 mb-4 bg-dark text-white rounded">
+    <div className="flex justify-center items-center gap-2 p-3 mb-4 bg-slate-900 dark:bg-slate-800 text-white rounded-lg shadow-inner transition-colors">
       {timerComponents.length ? (
-        timerComponents
+        <div className="flex items-center gap-1">
+          {timerComponents}
+        </div>
       ) : (
-        <span className="text-danger fw-bold">Auction Ended</span>
+        <span className="text-red-500 dark:text-red-400 font-bold uppercase tracking-widest text-sm">
+          Auction Ended
+        </span>
       )}
     </div>
   );
