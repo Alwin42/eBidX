@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
-import { Navbar, Container, Nav, Button, Dropdown } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 import axios from "axios";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -65,6 +76,7 @@ const NavBar = () => {
 
   const handleDeleteNotification = async (e, id) => {
     e.stopPropagation();
+    e.preventDefault();
     const token = localStorage.getItem("token");
 
     const notifToDelete = notifications.find((n) => n.id === id);
@@ -132,129 +144,117 @@ const NavBar = () => {
     }
   };
 
+  // Shared classes for links so they look good in both light and dark mode
+  const linkClass = "text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors";
+
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" className="mb-4">
-      <Container>
-        <Navbar.Brand as={Link} to="/">
+    <nav className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white py-4 mb-8 shadow-sm border-b dark:border-slate-800 transition-colors duration-300">
+      <div className="container mx-auto px-4 flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold tracking-tighter">
           eBidX
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto align-items-center">
-            <Nav.Link as={Link} to="/">
-              Auctions
-            </Nav.Link>
+        </Link>
 
-            {isAuthenticated ? (
-              <>
-                <Nav.Link as={Link} to="/dashboard">
-                  Dashboard
-                </Nav.Link>
-                <Nav.Link as={Link} to="/create">
-                  Sell Item
-                </Nav.Link>
-                <Nav.Link as={Link} to="/watchlist">
-                  Watchlisted
-                </Nav.Link>
+        <div className="flex items-center gap-6">
+          <Link to="/" className={linkClass}>
+            Auctions
+          </Link>
 
-                <Dropdown align="end" className="mx-2">
-                  <Dropdown.Toggle
-                    variant="link"
-                    id="dropdown-basic"
-                    className="position-relative text-light text-decoration-none border-0 p-2"
-                  >
-                    <span style={{ fontSize: "1.2rem" }}>🔔</span>
+          {/* Theme Toggle is always visible */}
+          <ThemeToggle />
+
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard" className={linkClass}>
+                Dashboard
+              </Link>
+              <Link to="/create" className={linkClass}>
+                Sell Item
+              </Link>
+              <Link to="/watchlist" className={linkClass}>
+                Watchlisted
+              </Link>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="relative p-2 focus:outline-none bg-transparent border-none cursor-pointer text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <span className="text-xl">🔔</span>
                     {unreadCount > 0 && (
-                      <span
-                        className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                        style={{ fontSize: "0.6rem" }}
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] h-[18px] text-[10px] flex items-center justify-center rounded-full"
                       >
                         {unreadCount}
-                      </span>
+                      </Badge>
                     )}
-                  </Dropdown.Toggle>
-
-                  <Dropdown.Menu
-                    style={{
-                      minWidth: "320px",
-                      maxHeight: "400px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    <Dropdown.Header className="d-flex justify-content-between align-items-center">
-                      <span>Notifications</span>
-                      {notifications.length > 0 && (
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="text-decoration-none p-0"
-                          style={{ fontSize: "0.8rem" }}
-                          onClick={handleClearAll}
-                        >
-                          Clear All
-                        </Button>
-                      )}
-                    </Dropdown.Header>
-
-                    {notifications.length === 0 ? (
-                      <Dropdown.Item className="text-muted text-center">
-                        No new notifications
-                      </Dropdown.Item>
-                    ) : (
-                      notifications.map((notif, idx) => (
-                        <Dropdown.Item
-                          key={idx}
-                          onClick={() => handleNotificationClick(notif)}
-                          className="d-flex justify-content-between align-items-center"
-                          style={{
-                            backgroundColor: notif.is_read
-                              ? "white"
-                              : "#f0f8ff",
-                            borderBottom: "1px solid #eee",
-                            whiteSpace: "normal",
-                          }}
-                        >
-                          <div style={{ marginRight: "10px" }}>
-                            <small>{notif.message}</small>
-                          </div>
-                          <Button
-                            variant="link"
-                            className="text-danger p-0 text-decoration-none"
-                            style={{ fontSize: "1.2rem", lineHeight: "1" }}
-                            onClick={(e) =>
-                              handleDeleteNotification(e, notif.id)
-                            }
-                          >
-                            &times;
-                          </Button>
-                        </Dropdown.Item>
-                      ))
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white dark:bg-slate-950 text-slate-900 dark:text-white border dark:border-slate-800">
+                  <div className="flex items-center justify-between p-4">
+                    <DropdownMenuLabel className="font-bold p-0">Notifications</DropdownMenuLabel>
+                    {notifications.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-0 text-xs text-blue-600 dark:text-blue-400 hover:bg-transparent"
+                        onClick={handleClearAll}
+                      >
+                        Clear All
+                      </Button>
                     )}
-                  </Dropdown.Menu>
-                </Dropdown>
+                  </div>
+                  <DropdownMenuSeparator className="dark:bg-slate-800" />
 
-                <Button
-                  variant="outline-light"
-                  onClick={handleLogout}
-                  className="ms-2"
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Nav.Link as={Link} to="/login">
-                  Login
-                </Nav.Link>
-                <Nav.Link as={Link} to="/register">
-                  Register
-                </Nav.Link>
-              </>
-            )}
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-muted-foreground">
+                      No new notifications
+                    </div>
+                  ) : (
+                    notifications.map((notif, idx) => (
+                      <DropdownMenuItem
+                        key={idx}
+                        className={`p-4 flex justify-between items-start gap-3 cursor-pointer border-b dark:border-slate-800 last:border-0 ${
+                          !notif.is_read 
+                            ? "bg-blue-50/50 dark:bg-blue-900/20" 
+                            : "bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900"
+                        }`}
+                        onClick={() => handleNotificationClick(notif)}
+                      >
+                        <div className="text-xs leading-relaxed flex-1 text-slate-700 dark:text-slate-300">
+                          {notif.message}
+                        </div>
+                        <button
+                          onClick={(e) => handleDeleteNotification(e, notif.id)}
+                          className="text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 text-lg leading-none transition-colors border-none bg-transparent"
+                        >
+                          &times;
+                        </button>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="h-9 px-4 transition-all"
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className={linkClass}>
+                Login
+              </Link>
+              <Link to="/register" className={linkClass}>
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 };
 
