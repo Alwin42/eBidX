@@ -15,6 +15,7 @@ class AuctionItem(models.Model):
     CONDITION_CHOICES = [
         ("new", "New"),
         ("used", "Used"),
+        ("refurbished", "Refurbished"),
     ]
 
     title = models.CharField(max_length=200)
@@ -27,12 +28,18 @@ class AuctionItem(models.Model):
     )
 
     condition = models.CharField(
-        max_length=10, choices=CONDITION_CHOICES, default="used"
+        max_length=20, choices=CONDITION_CHOICES, default="used"
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField()
     seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name="items")
+    is_paid = models.BooleanField(default=False)
+
+    @property
+    def current_price(self):
+        highest_bid = self.bids.order_by("-amount").first()
+        return highest_bid.amount if highest_bid else self.base_price
 
     def __str__(self):
         return self.title
