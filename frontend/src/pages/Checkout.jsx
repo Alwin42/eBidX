@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Container, Card, Row, Col, Spinner, Alert } from "react-bootstrap";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import StripePayment from "../components/StripeCheckout";
+import StripePayment from "../components/StripeCheckout"; // Import your Stripe component
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 const Checkout = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,12 +17,9 @@ const Checkout = () => {
     const fetchItem = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/auctions/${id}/`,
-          {
-            headers: { Authorization: `Token ${token}` },
-          },
-        );
+        const res = await axios.get(`http://127.0.0.1:8000/api/auctions/${id}/`, {
+          headers: { Authorization: `Token ${token}` },
+        });
         setItem(res.data);
         setLoading(false);
       } catch (err) {
@@ -35,87 +33,95 @@ const Checkout = () => {
 
   if (loading)
     return (
-      <Container className="text-center mt-5">
-        <Spinner animation="border" />
-        <p className="mt-2">Loading secure checkout...</p>
-      </Container>
+      <div className="flex flex-col items-center justify-center min-h-[400px] mt-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="mt-4 text-muted-foreground">Loading secure checkout...</p>
+      </div>
     );
-
+  
   if (error)
     return (
-      <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
-      </Container>
+      <div className="container mx-auto mt-12 px-4 max-w-3xl">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
 
   return (
-    <Container className="py-5" style={{ maxWidth: "900px" }}>
-      <h2 className="mb-4 fw-bold">Secure Checkout 🔒</h2>
+    <div className="container mx-auto py-12 px-4 max-w-5xl">
+      <h2 className="text-3xl font-bold mb-8">Secure Checkout 🔒</h2>
 
-      <Row>
-        <Col md={5} className="mb-4">
-          <Card className="shadow-sm border-0 bg-light">
-            <Card.Body>
-              <h5 className="fw-bold mb-3">Order Summary</h5>
-
-              <div className="d-flex align-items-center mb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-5">
+          <Card className="shadow-sm border-0 bg-slate-50 dark:bg-slate-900 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-lg font-bold">Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center mb-6">
                 <img
                   src={item.image}
                   alt={item.title}
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                  }}
-                  className="me-3"
+                  className="w-16 h-16 object-cover rounded-md mr-4 shadow-sm"
                 />
                 <div>
-                  <h6 className="mb-0 fw-bold">{item.title}</h6>
-                  <small className="text-muted">Item #{item.id}</small>
+                  <h6 className="font-bold text-base leading-tight">
+                    {item.title}
+                  </h6>
+                  <p className="text-sm text-muted-foreground">Item #{item.id}</p>
                 </div>
               </div>
-
-              <hr />
-
-              <div className="d-flex justify-content-between mb-2">
-                <span>Winning Bid</span>
-                <span className="fw-bold">₹{item.current_price}</span>
+              <Separator className="my-4 dark:bg-slate-800" />
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span>Winning Bid</span>
+                  <span className="font-bold">₹{item.current_price}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Processing Fee (0%)</span>
+                  <span>₹0.00</span>
+                </div>
               </div>
-              <div className="d-flex justify-content-between mb-2">
-                <span className="text-muted">Processing Fee (0%)</span>
-                <span className="text-muted">₹0.00</span>
+              <Separator className="my-4 dark:bg-slate-800" />
+              <div className="flex justify-between items-center">
+                <span className="text-xl font-bold">Total</span>
+                <span className="text-2xl font-bold text-green-600 dark:text-green-500">
+                  ₹{item.current_price}
+                </span>
               </div>
-
-              <hr />
-
-              <div className="d-flex justify-content-between fs-4 fw-bold">
-                <span>Total</span>
-                <span className="text-success">₹{item.current_price}</span>
-              </div>
-            </Card.Body>
+            </CardContent>
           </Card>
-        </Col>
+        </div>
 
-        <Col md={7}>
-          <Card className="shadow-lg border-0">
-            <Card.Body className="p-4">
-              <h4 className="mb-3 fw-bold">Pay with Card</h4>
-
-              <Alert variant="info" className="small mb-4">
-                <i className="bi bi-info-circle-fill me-2"></i>
-                <strong>Test Mode Active:</strong> You will not be charged.{" "}
-                <br />
-                Use card number:{" "}
-                <code className="fw-bold">4242 4242 4242 4242</code>
+        <div className="lg:col-span-7">
+          <Card className="shadow-lg border-0 bg-white dark:bg-slate-900 transition-colors">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">Pay with Card</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <AlertDescription className="text-blue-800 dark:text-blue-300 text-sm leading-relaxed">
+                  <span className="font-bold block mb-1">Test Mode Active:</span>
+                  You will not be charged. Use test card: <br />
+                  <code className="bg-blue-100 dark:bg-blue-900/50 px-2 py-0.5 rounded font-bold text-blue-900 dark:text-blue-200 mt-1 inline-block">
+                    4242 4242 4242 4242
+                  </code>
+                </AlertDescription>
               </Alert>
-
-              <StripePayment auctionId={item.id} price={item.current_price} />
-            </Card.Body>
+              <div className="pt-2">
+                {/* Replaced Simulated form with your actual Stripe Component */}
+                <StripePayment
+                  auctionId={item.id}
+                  price={item.current_price}
+                />
+              </div>
+            </CardContent>
           </Card>
-        </Col>
-      </Row>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 };
 
