@@ -13,7 +13,6 @@ class AuctionItemSerializer(serializers.ModelSerializer):
     seller = serializers.StringRelatedField()
     current_price = serializers.SerializerMethodField()
     is_owner = serializers.SerializerMethodField()
-
     highest_bidder = serializers.SerializerMethodField()
     is_watched = serializers.SerializerMethodField()
 
@@ -47,8 +46,8 @@ class AuctionItemSerializer(serializers.ModelSerializer):
             "uploaded_images",
             "highest_bidder",
             "is_watched",
+            "is_paid",
         ]
-
         read_only_fields = [
             "id",
             "seller",
@@ -57,42 +56,40 @@ class AuctionItemSerializer(serializers.ModelSerializer):
             "is_active",
             "created_at",
             "is_owner",
+            "images",
         ]
 
     def get_current_price(self, obj):
         highest_bid = obj.bids.order_by("-amount").first()
-        if highest_bid:
-            return highest_bid.amount
-        return obj.base_price
+        return highest_bid.amount if highest_bid else obj.base_price
 
     def get_is_owner(self, obj):
         request = self.context.get("request")
-        if request and request.user.is_authenticated:
-            return obj.seller == request.user
-        return False
+        return request and request.user.is_authenticated and obj.seller == request.user
 
     def get_highest_bidder(self, obj):
         highest_bid = obj.bids.order_by("-amount").first()
         return highest_bid.bidder.id if highest_bid else None
-
-    def create(self, validated_data):
-        uploaded_images = validated_data.pop("uploaded_images", [])
-        # Note: The ViewSet MUST inject the 'seller' into validated_data via serializer.save(seller=request.user)
-        auction = AuctionItem.objects.create(**validated_data)
-
-        for index, img in enumerate(uploaded_images):
-            AuctionImage.objects.create(auction=auction, image=img)
-            if index == 0:
-                auction.image = img
-                auction.save()
-
-        return auction
 
     def get_is_watched(self, obj):
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             return WatchList.objects.filter(user=request.user, auction=obj).exists()
         return False
+
+    def create(self, validated_data):
+        uploaded_images = validated_data.pop("uploaded_images", [])
+
+        auction = AuctionItem.objects.create(**validated_data)
+
+        for index, img in enumerate(uploaded_images):
+            auction_image = AuctionImage.objects.create(auction=auction, image=img)
+
+            if index == 0:
+                auction.image = auction_image.image
+                auction.save(update_fields=["image"])
+
+        return auction
 
 
 class BidSerializer(serializers.ModelSerializer):
@@ -120,19 +117,13 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         fields = ["username", "email", "password", "password_confirm"]
 
     def validate(self, data):
-        if data.get("password") != data.get("password_confirm"):
+        if data["password"] != data["password_confirm"]:
             raise serializers.ValidationError({"password": "Passwords do not match!"})
         return data
 
     def create(self, validated_data):
         validated_data.pop("password_confirm", None)
-
-        user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=validated_data["password"],
-        )
-        return user
+        return User.objects.create_user(**validated_data)
 
 
 class NotificationSerializer(serializers.ModelSerializer):
