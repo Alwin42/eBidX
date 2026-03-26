@@ -46,7 +46,7 @@ def create_user_notifications(sender, instance, created, **kwargs):
         if previous_bid and previous_bid.bidder != bidder:
             Notification.objects.create(
                 recipient=previous_bid.bidder,
-                message=f"[ALERT]You've been outbid on '{auction.title}'!",
+                message=f"⚠️You've been outbid on '{auction.title}'!",
                 link=f"/auction/{auction.id}",
             )
 
