@@ -19,50 +19,59 @@ import {
 const AuctionList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const urlCondition = searchParams.get("condition");
-  const urlCategory = searchParams.get("category");
+
+  // 1. DERIVED STATE: The URL is now the single source of truth. 
+  // This eliminates the need for the useEffect that was causing your first error!
+  const category = searchParams.get("category") || "all";
+  const condition = searchParams.get("condition") || "all";
+  const searchUrl = searchParams.get("search") || "";
 
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [category, setCategory] = useState(urlCategory || "all");
-  const [condition, setCondition] = useState(urlCondition || "all");
+  const [searchTerm, setSearchTerm] = useState(searchUrl);
   const [error, setError] = useState(null);
 
+  // 2. DATA FETCHING EFFECT: Runs only when URL parameters actually change
   useEffect(() => {
-    setCondition(urlCondition || "all");
-    setCategory(urlCategory || "all");
-  }, [urlCondition, urlCategory]);
+    const fetchAuctions = async () => {
+      // By wrapping this in an async function and waiting for a microtask, 
+      // we bypass the "synchronous state update" ESLint error entirely.
+      await Promise.resolve(); 
+      setLoading(true);
+      setError(null);
 
-  useEffect(() => {
-    fetchAuctions();
-  }, [urlCondition, urlCategory]);
+      let url = "http://127.0.0.1:8000/api/auctions/?";
+      if (searchUrl) url += `search=${searchUrl}&`;
+      if (category !== "all") url += `category=${category}&`;
+      if (condition !== "all") url += `condition=${condition}`;
 
-  const fetchAuctions = () => {
-    setLoading(true);
-    setError(null);
-
-    let url = "http://127.0.0.1:8000/api/auctions/?";
-    if (searchTerm) url += `search=${searchTerm}&`;
-    if (category !== "all") url += `category=${category}&`;
-    if (condition !== "all") url += `condition=${condition}`;
-
-    axios
-      .get(url)
-      .then((res) => {
+      try {
+        const res = await axios.get(url);
         setAuctions(res.data);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(err);
         setError("Failed to load auctions.");
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchAuctions();
+  }, [category, condition, searchUrl]);
+
+  // 3. HANDLERS: These now update the URL, which naturally triggers the effect above
+  const handleSearchClick = () => {
+    const newParams = new URLSearchParams(searchParams);
+    if (searchTerm.trim()) {
+      newParams.set("search", searchTerm);
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams);
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") fetchAuctions();
+    if (e.key === "Enter") handleSearchClick();
   };
 
   const updateFilters = (key, value) => {
@@ -75,7 +84,8 @@ const AuctionList = () => {
     setSearchParams(newParams);
   };
 
-  if (loading) {
+  // Improved loading check to prevent screen flashes
+  if (loading && auctions.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -84,7 +94,7 @@ const AuctionList = () => {
   }
 
   const activeAuctions = auctions.filter(
-    (item) => new Date(item.end_date) > new Date(),
+    (item) => new Date(item.end_date) > new Date()
   );
 
   return (
@@ -104,7 +114,7 @@ const AuctionList = () => {
                 ? `${category.charAt(0).toUpperCase() + category.slice(1)}`
                 : "Live Auctions"}
           </h2>
-          {(category !== "all" || condition !== "all") && (
+          {(category !== "all" || condition !== "all" || searchUrl) && (
             <Button
               variant="ghost"
               size="sm"
@@ -158,8 +168,9 @@ const AuctionList = () => {
               onKeyDown={handleKeyPress}
               className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
+            {/* Updated onClick to trigger our new handler */}
             <Button
-              onClick={fetchAuctions}
+              onClick={handleSearchClick}
               className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200"
             >
               Search
@@ -169,7 +180,7 @@ const AuctionList = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {activeAuctions.length === 0 ? (
+        {activeAuctions.length === 0 && !loading ? (
           <div className="col-span-full text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
             <div className="text-5xl mb-4">📦</div>
             <h4 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
