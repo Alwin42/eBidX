@@ -1,9 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
+// UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// React Bits Animations
+import BorderGlow from "@/components/ui/BorderGlow"; 
+import SplitText from "@/components/ui/SplitText";
+import BlurText from "@/components/ui/BlurText";
+import CountUp from "@/components/ui/CountUp";
+import DarkVeil from "@/components/ui/DarkVeil";
 
 const Dashboard = () => {
   const [data, setData] = useState({ bids: [], listings: [] });
@@ -13,56 +22,29 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const socketRef = useRef(null);
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem("user_id");
-    if (storedUserId) setUserId(parseInt(storedUserId));
-    fetchDashboardData(true);
-  }, []);
-
-  useEffect(() => {
+  // --- 1. FUNCTIONS DEFINED FIRST (Hoisting Fix) ---
+  
+  const fetchDashboardData = async (showLoading = true) => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-    const socket = new WebSocket(
-      `ws://127.0.0.1:8000/ws/notifications/?token=${token}`,
-    );
-    socketRef.current = socket;
+    if (showLoading) setLoading(true);
 
-    socket.onopen = () => console.log("Dashboard Live Updates Active");
-
-    socket.onmessage = (event) => {
-      const msgData = JSON.parse(event.data);
-
-      if (
-        msgData.type === "notification" &&
-        msgData.auction_id &&
-        msgData.new_price
-      ) {
-        updateBidStatus(msgData.auction_id, msgData.new_price);
-      }
-
-      if (msgData.type === "dashboard_update") {
-        if (
-          [
-            "auction_deleted",
-            "item_sold",
-            "payment_received",
-            "payment_sent",
-          ].includes(msgData.event)
-        ) {
-          fetchDashboardData(false);
-        } else if (msgData.auction_id && msgData.new_price) {
-          updateBidStatus(msgData.auction_id, msgData.new_price);
-        }
-      }
-    };
-
-    socket.onerror = (err) => console.error("Dashboard WebSocket Error:", err);
-
-    return () => {
-      if (socketRef.current) socketRef.current.close();
-    };
-  }, []);
+    try {
+      const res = await axios.get("http://127.0.0.1:8000/api/dashboard/", {
+        headers: { Authorization: `Token ${token}` },
+      });
+      setData(res.data || { bids: [], listings: [] });
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load dashboard data.");
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
 
   const updateBidStatus = (auctionId, newPrice) => {
     setData((prevData) => {
@@ -87,271 +69,213 @@ const Dashboard = () => {
     });
   };
 
-  const fetchDashboardData = async (showLoading = true) => {
+  // --- 2. EFFECTS ---
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("user_id");
+    if (storedUserId) setUserId(parseInt(storedUserId));
+    fetchDashboardData(true);
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+    if (!token) return;
 
-    if (showLoading) setLoading(true);
+    const socket = new WebSocket(
+      `ws://127.0.0.1:8000/ws/notifications/?token=${token}`
+    );
+    socketRef.current = socket;
 
-    try {
-      const res = await axios.get("http://127.0.0.1:8000/api/dashboard/", {
-        headers: { Authorization: `Token ${token}` },
-      });
-      setData(res.data || { bids: [], listings: [] });
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load profile data.");
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
+    socket.onmessage = (event) => {
+      const msgData = JSON.parse(event.data);
+      if (msgData.type === "notification" && msgData.auction_id && msgData.new_price) {
+        updateBidStatus(msgData.auction_id, msgData.new_price);
+      }
+      if (msgData.type === "dashboard_update") {
+        fetchDashboardData(false);
+      }
+    };
+
+    return () => {
+      if (socketRef.current) socketRef.current.close();
+    };
+  }, []);
 
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
+
   if (error)
     return (
-      <div className="container mx-auto mt-12 px-4">
-        <Alert variant="destructive">
+      <div className="container mx-auto mt-12 px-4 max-w-2xl">
+        <Alert variant="destructive" className="backdrop-blur-md bg-red-500/10 border-red-500/50">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>
     );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold">My Dashboard</h2>
-        <p className="text-muted-foreground">Manage your bids and listings</p>
+    <div className="relative min-h-screen w-full bg-slate-950 overflow-x-hidden">
+      {/* Background Layer */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
+        <DarkVeil stretch={true} />
       </div>
 
-      <div className="mb-10">
-        <h4 className="text-xl font-semibold mb-6 border-b dark:border-slate-800 pb-2">
-          My Recent Bids
-        </h4>
-        {data?.bids?.length === 0 ? (
-          <Alert className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
-            <AlertDescription>
-              You haven't placed any bids yet.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data?.bids?.map((bid) => {
-              const item = bid.auction_item || {};
-              const imageUrl =
-                item?.image ||
-                (item?.images?.length > 0 ? item.images[0].image : null);
-              if (!item.id) return null;
+      <div className="container mx-auto px-4 py-12 relative z-10">
+        <div className="mb-12">
+          <div className="text-4xl font-black tracking-tight text-white italic drop-shadow-md">
+            <SplitText text="MY DASHBOARD" delay={50} />
+          </div>
+          <p className="text-slate-400 mt-2 font-medium tracking-wide">
+            Real-time status of your bids and active listings.
+          </p>
+        </div>
 
-              const isEnded = new Date(item.end_date) < new Date();
-              const isWinning =
-                parseFloat(bid.amount) === parseFloat(item.current_price);
-              const isPaid = item.is_paid;
+        {/* --- RECENT BIDS SECTION --- */}
+        <div className="mb-16">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <BlurText 
+              text="My Recent Bids" 
+              className="text-xl font-bold text-slate-100 uppercase tracking-widest" 
+            />
+          </div>
 
-              return (
-                <Card
-                  key={bid.id}
-                  className="overflow-hidden shadow-sm flex flex-col h-full border-0 bg-slate-50/30 dark:bg-slate-900/50 transition-colors"
-                >
-                  <div className="h-[150px] overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={item.title}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground text-sm italic">
-                        No Image
-                      </span>
-                    )}
-                  </div>
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-base line-clamp-1">
-                      {item.title || "Unknown Item"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0 flex-1 flex flex-col">
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">My Bid:</span>
-                        <span className="font-bold text-primary dark:text-blue-400">
-                          ₹{bid.amount}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Base Price:
-                        </span>
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
-                          ₹{item.base_price || "0.00"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Current Price:
-                        </span>
-                        <span
-                          className={`font-bold ${isWinning && !isEnded ? "text-green-600 dark:text-green-400" : isEnded ? "text-slate-600 dark:text-slate-400" : "text-red-600 dark:text-red-400"}`}
-                        >
-                          ₹{item.current_price || "N/A"}
-                        </span>
-                      </div>
-                    </div>
+          {data?.bids?.length === 0 ? (
+            <Alert className="bg-white/5 backdrop-blur-md border-white/10 text-slate-400 rounded-2xl py-8">
+              <AlertDescription>You haven't placed any bids yet. Start exploring auctions!</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {data?.bids?.map((bid) => {
+                const item = bid.auction_item || {};
+                const imageUrl = item?.image || (item?.images?.length > 0 ? item.images[0].image : null);
+                if (!item.id) return null;
 
-                    <div className="mt-auto space-y-2">
-                      {isEnded && isWinning ? (
-                        isPaid ? (
-                          <div className="flex gap-2 w-full">
-                            <Button
-                              disabled
-                              className="flex-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 opacity-100 font-bold border border-green-200 dark:border-green-800"
-                            >
-                              Paid ✓
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex-1 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                              onClick={() => navigate(`/receipt/${item.id}`)}
-                            >
-                              Receipt
-                            </Button>
+                const isEnded = new Date(item.end_date) < new Date();
+                const isWinning = parseFloat(bid.amount) === parseFloat(item.current_price);
+                const isPaid = item.is_paid;
+
+                return (
+                  <BorderGlow 
+                    key={bid.id} 
+                    className="h-full rounded-[24px]"
+                    // Glow green if winning, red if outbid (while active)
+                    color={isWinning ? "#22c55e" : (!isEnded ? "#ef4444" : "#64748b")}
+                  >
+                    <Card className="group relative h-full flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-slate-900/40 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1">
+                      
+                      {/* Inset Image */}
+                      <div className="p-3 pb-0">
+                        <div className="relative h-40 w-full overflow-hidden rounded-xl bg-slate-800/50 border border-white/10">
+                          {imageUrl ? (
+                            <img src={imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs italic text-slate-500">No Image</div>
+                          )}
+                          <div className={`absolute top-2 right-2 px-2 py-1 rounded-md text-[10px] font-black uppercase ${isWinning ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+                            {isWinning ? "Winning" : "Outbid"}
                           </div>
-                        ) : (
-                          <Button
-                            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold"
-                            onClick={() => navigate(`/checkout/${item.id}`)}
-                          >
-                            Pay Now 💳
-                          </Button>
-                        )
-                      ) : isEnded ? (
-                        <Button
-                          disabled
-                          className="w-full bg-slate-100 dark:bg-slate-800 text-slate-400 opacity-100"
-                        >
-                          Auction Ended
-                        </Button>
-                      ) : isWinning ? (
-                        <Button
-                          disabled
-                          className="w-full bg-green-600 text-white opacity-100 font-bold"
-                        >
-                          Winning
-                        </Button>
-                      ) : (
-                        <Button
-                          disabled
-                          className="w-full bg-red-500 text-white opacity-100 font-bold"
-                        >
-                          Outbid
-                        </Button>
-                      )}
+                        </div>
+                      </div>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full dark:border-slate-700 dark:hover:bg-slate-800"
-                        onClick={() => navigate(`/auction/${item.id}`)}
-                      >
-                        View Auction
+                      <CardHeader className="p-5 pb-2">
+                        <CardTitle className="text-lg font-bold line-clamp-1 text-white">
+                          {item.title}
+                        </CardTitle>
+                      </CardHeader>
+
+                      <CardContent className="p-5 pt-0 flex-1 flex flex-col">
+                        <div className="bg-white/5 rounded-xl p-3 mb-4 space-y-2 border border-white/5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-bold uppercase">My Bid</span>
+                            <span className="text-white font-black">₹{bid.amount}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-500 font-bold uppercase">Current Price</span>
+                            <span className={`font-black ${isWinning ? "text-green-400" : "text-red-400"}`}>
+                              ₹<CountUp to={parseFloat(item.current_price)} duration={1} />
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-auto space-y-2">
+                          {isEnded && isWinning ? (
+                            isPaid ? (
+                              <div className="flex gap-2">
+                                <Button disabled className="flex-1 bg-green-500/20 text-green-400 border border-green-500/30 opacity-100 font-bold">Paid ✓</Button>
+                                <Button variant="outline" className="flex-1 border-white/10 text-white hover:bg-white/10" onClick={() => navigate(`/receipt/${item.id}`)}>Receipt</Button>
+                              </div>
+                            ) : (
+                              <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black shadow-lg shadow-amber-500/20 animate-pulse" onClick={() => navigate(`/checkout/${item.id}`)}>
+                                PAY NOW 💳
+                              </Button>
+                            )
+                          ) : isEnded ? (
+                            <Button disabled className="w-full bg-white/5 text-slate-500 border border-white/5 font-bold">AUCTION ENDED</Button>
+                          ) : (
+                            <Button className={`w-full font-black text-white border-none ${isWinning ? "bg-green-600/80" : "bg-red-600/80"}`} onClick={() => navigate(`/auction/${item.id}`)}>
+                              {isWinning ? "WINNING" : "RE-BID NOW"}
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </BorderGlow>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* --- MY LISTINGS SECTION --- */}
+        <div>
+          <div className="mb-8 flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+            <BlurText 
+              text="My Active Listings" 
+              className="text-xl font-bold text-slate-100 uppercase tracking-widest" 
+            />
+          </div>
+
+          {data?.listings?.length === 0 ? (
+            <Alert className="bg-white/5 backdrop-blur-md border-dashed border-white/10 text-slate-400 rounded-2xl py-8">
+              <AlertDescription>You haven't listed any items yet.</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {data?.listings?.map((item) => {
+                const imageUrl = item?.image || (item?.images?.length > 0 ? item.images[0].image : null);
+
+                return (
+                  <Card key={item.id} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/30 backdrop-blur-md hover:bg-slate-900/50 transition-all">
+                    <div className="h-32 w-full overflow-hidden bg-slate-800/40">
+                      {imageUrl && <img src={imageUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
+                    </div>
+                    <div className="p-4">
+                      <h5 className="font-bold text-white text-sm line-clamp-1 mb-2">{item.title}</h5>
+                      <div className="flex justify-between items-center text-xs mb-3">
+                        <span className="text-slate-500">Current</span>
+                        <span className="text-blue-400 font-bold">₹{item.current_price}</span>
+                      </div>
+                      {item.is_paid && (
+                        <div className="text-[10px] font-bold text-green-400 bg-green-400/10 py-1 px-2 rounded-md mb-3 text-center">
+                          PAID BY BUYER ✓
+                        </div>
+                      )}
+                      <Button variant="secondary" size="sm" className="w-full h-8 text-[10px] bg-white/10 text-white hover:bg-white/20 border-none" onClick={() => navigate(`/auction/${item.id}`)}>
+                        VIEW ITEM
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h4 className="text-xl font-semibold mb-6 border-b dark:border-slate-800 pb-2">
-          My Listings
-        </h4>
-        {data?.listings?.length === 0 ? (
-          <Alert className="bg-slate-50 dark:bg-slate-900 border-dashed border-slate-200 dark:border-slate-800">
-            <AlertDescription>
-              You haven't listed any items for sale.
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {data?.listings?.map((item) => {
-              const imageUrl =
-                item?.image ||
-                (item?.images?.length > 0 ? item.images[0].image : null);
-
-              return (
-                <Card
-                  key={item.id}
-                  className="h-full border-0 shadow-sm bg-slate-100/50 dark:bg-slate-900/40 flex flex-col transition-colors"
-                >
-                  <div className="h-[120px] overflow-hidden bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={item.title}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <span className="text-muted-foreground text-xs italic">
-                        No Image
-                      </span>
-                    )}
-                  </div>
-                  <CardHeader className="p-3 pb-1">
-                    <CardTitle className="text-sm line-clamp-1">
-                      {item.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 pt-0 flex-1 flex flex-col">
-                    <div className="mb-3 space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          Base Price:
-                        </span>
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
-                          ₹{item.base_price || "0.00"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          Current Price:
-                        </span>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">
-                          ₹{item.current_price}
-                        </span>
-                      </div>
-
-                      {item.is_paid && (
-                        <p className="text-xs font-bold text-green-600 dark:text-green-500 mt-2">
-                          Paid by Buyer ✓
-                        </p>
-                      )}
-                    </div>
-
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="w-full h-8 text-xs mt-auto dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white"
-                      onClick={() => navigate(`/auction/${item.id}`)}
-                    >
-                      View My Item
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

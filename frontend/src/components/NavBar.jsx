@@ -27,20 +27,20 @@ const NavBar = () => {
     navigate("/");
   };
 
-  const fetchNotifications = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await axios.get("http://127.0.0.1:8000/api/notifications/", {
-        headers: { Authorization: `Token ${token}` },
-      });
-      setNotifications(res.data);
-      setUnreadCount(res.data.filter((n) => !n.is_read).length);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
+    const fetchNotifications = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await axios.get("http://127.0.0.1:8000/api/notifications/", {
+          headers: { Authorization: `Token ${token}` },
+        });
+        setNotifications(res.data);
+        setUnreadCount(res.data.filter((n) => !n.is_read).length);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     if (isAuthenticated) {
       fetchNotifications();
 
@@ -144,24 +144,22 @@ const NavBar = () => {
     }
   };
 
-  // Shared classes for links so they look good in both light and dark mode
-  const linkClass = "text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors";
+  const linkClass =
+    "text-sm font-medium text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white transition-colors";
 
   return (
-    <nav className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white py-4 mb-8 shadow-sm border-b dark:border-slate-800 transition-colors duration-300">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold tracking-tighter">
+    <div className="sticky top-6 z-50 flex justify-center w-full px-4 mb-8 pointer-events-none">
+      <nav className="pointer-events-auto flex items-center justify-between w-full max-w-5xl px-6 py-3 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md border border-white/40 dark:border-slate-700/50 shadow-lg rounded-full transition-all duration-300">
+        <Link to="/" className="text-2xl font-bold tracking-tighter text-slate-900 dark:text-white mr-6">
           eBidX
         </Link>
-
+        
         <div className="flex items-center gap-6">
           <Link to="/" className={linkClass}>
             Auctions
           </Link>
-
-          {/* Theme Toggle is always visible */}
           <ThemeToggle />
-
+          
           {isAuthenticated ? (
             <>
               <Link to="/dashboard" className={linkClass}>
@@ -176,21 +174,21 @@ const NavBar = () => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="relative p-2 focus:outline-none bg-transparent border-none cursor-pointer text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  <button className="relative p-2 focus:outline-none bg-transparent border-none cursor-pointer text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors">
                     <span className="text-xl">🔔</span>
                     {unreadCount > 0 && (
                       <Badge 
                         variant="destructive" 
-                        className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] h-[18px] text-[10px] flex items-center justify-center rounded-full"
+                        className="absolute -top-1 -right-1 px-1.5 py-0.5 min-w-[18px] h-[18px] text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-slate-900"
                       >
                         {unreadCount}
                       </Badge>
                     )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white dark:bg-slate-950 text-slate-900 dark:text-white border dark:border-slate-800">
+                <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border border-slate-200/50 dark:border-slate-800/50 rounded-2xl shadow-xl mt-2">
                   <div className="flex items-center justify-between p-4">
-                    <DropdownMenuLabel className="font-bold p-0">Notifications</DropdownMenuLabel>
+                    <DropdownMenuLabel className="font-bold p-0 text-slate-900 dark:text-white">Notifications</DropdownMenuLabel>
                     {notifications.length > 0 && (
                       <Button
                         variant="ghost"
@@ -215,7 +213,7 @@ const NavBar = () => {
                         className={`p-4 flex justify-between items-start gap-3 cursor-pointer border-b dark:border-slate-800 last:border-0 ${
                           !notif.is_read 
                             ? "bg-blue-50/50 dark:bg-blue-900/20" 
-                            : "bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900"
+                            : "bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-900/50"
                         }`}
                         onClick={() => handleNotificationClick(notif)}
                       >
@@ -237,7 +235,7 @@ const NavBar = () => {
               <Button
                 variant="outline"
                 onClick={handleLogout}
-                className="h-9 px-4 transition-all"
+                className="h-9 px-5 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-slate-300 dark:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-700/80 transition-all text-slate-900 dark:text-slate-100"
               >
                 Logout
               </Button>
@@ -253,8 +251,8 @@ const NavBar = () => {
             </>
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 };
 

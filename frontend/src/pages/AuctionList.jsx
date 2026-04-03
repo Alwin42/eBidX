@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import CountdownTimer from "../components/CountdownTimer";
+import CountdownTimer from "../components/ui/CountdownTimer";
 
+// UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +17,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// React Bits Animations
+import BorderGlow from "@/components/ui/BorderGlow"; 
+import SplitText from "@/components/ui/SplitText";
+import BlurText from "@/components/ui/BlurText";
+import CountUp from "@/components/ui/CountUp";
+
 const AuctionList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // 1. DERIVED STATE: The URL is now the single source of truth. 
-  // This eliminates the need for the useEffect that was causing your first error!
   const category = searchParams.get("category") || "all";
   const condition = searchParams.get("condition") || "all";
   const searchUrl = searchParams.get("search") || "";
@@ -31,11 +36,8 @@ const AuctionList = () => {
   const [searchTerm, setSearchTerm] = useState(searchUrl);
   const [error, setError] = useState(null);
 
-  // 2. DATA FETCHING EFFECT: Runs only when URL parameters actually change
   useEffect(() => {
     const fetchAuctions = async () => {
-      // By wrapping this in an async function and waiting for a microtask, 
-      // we bypass the "synchronous state update" ESLint error entirely.
       await Promise.resolve(); 
       setLoading(true);
       setError(null);
@@ -59,7 +61,6 @@ const AuctionList = () => {
     fetchAuctions();
   }, [category, condition, searchUrl]);
 
-  // 3. HANDLERS: These now update the URL, which naturally triggers the effect above
   const handleSearchClick = () => {
     const newParams = new URLSearchParams(searchParams);
     if (searchTerm.trim()) {
@@ -84,11 +85,10 @@ const AuctionList = () => {
     setSearchParams(newParams);
   };
 
-  // Improved loading check to prevent screen flashes
   if (loading && auctions.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -97,44 +97,47 @@ const AuctionList = () => {
     (item) => new Date(item.end_date) > new Date()
   );
 
+  // Determine page title text
+  const pageTitle = condition === "refurbished"
+    ? "Refurbished Deals"
+    : category !== "all"
+      ? `${category.charAt(0).toUpperCase() + category.slice(1)}`
+      : "Live Auctions";
+
   return (
-    <div className="py-4 px-4 container mx-auto">
+    <div className="py-8 px-4 container mx-auto">
       {error && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-6 backdrop-blur-md bg-red-500/10 border-red-500/50 text-red-500">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            {condition === "refurbished"
-              ? "Refurbished Deals"
-              : category !== "all"
-                ? `${category.charAt(0).toUpperCase() + category.slice(1)}`
-                : "Live Auctions"}
-          </h2>
+      <div className="mb-10">
+        <div className="flex justify-between items-center mb-8">
+          {/* Animated Header with SplitText */}
+          <div className="text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100 drop-shadow-sm">
+            <SplitText text={pageTitle} delay={40} />
+          </div>
+          
           {(category !== "all" || condition !== "all" || searchUrl) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate("/browse")}
-              className="text-muted-foreground"
+              className="text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-800/50 backdrop-blur-sm transition-all"
             >
               Clear Filters
             </Button>
           )}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3 mx-auto max-w-full lg:max-w-none">
-          <Select
-            value={category}
-            onValueChange={(value) => updateFilters("category", value)}
-          >
-            <SelectTrigger className="w-full md:w-[180px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
+        {/* Glassmorphic Filter Bar */}
+        <div className="flex flex-col md:flex-row gap-4 mx-auto max-w-full lg:max-w-none p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 shadow-lg">
+          <Select value={category} onValueChange={(value) => updateFilters("category", value)}>
+            <SelectTrigger className="w-full md:w-[200px] bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-white/50 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-white/80 dark:hover:bg-slate-700/80 transition-all">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
+            <SelectContent className="bg-white/90 dark:bg-slate-900/90 text-white backdrop-blur-xl border-slate-200/50 dark:border-slate-700/50">
               <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="electronics">Electronics</SelectItem>
               <SelectItem value="fashion">Fashion</SelectItem>
@@ -145,14 +148,11 @@ const AuctionList = () => {
             </SelectContent>
           </Select>
 
-          <Select
-            value={condition}
-            onValueChange={(value) => updateFilters("condition", value)}
-          >
-            <SelectTrigger className="w-full md:w-[160px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
+          <Select value={condition} onValueChange={(value) => updateFilters("condition", value)}>
+            <SelectTrigger className="w-full md:w-[180px] bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-white/50 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-white/80 dark:hover:bg-slate-700/80 transition-all">
               <SelectValue placeholder="Condition" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
+            <SelectContent className="bg-white/90 dark:bg-slate-900/90 text-white backdrop-blur-xl border-slate-200/50 dark:border-slate-700/50">
               <SelectItem value="all">All Conditions</SelectItem>
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="used">Used</SelectItem>
@@ -160,18 +160,17 @@ const AuctionList = () => {
             </SelectContent>
           </Select>
 
-          <div className="flex flex-1 gap-2">
+          <div className="flex flex-1 gap-3">
             <Input
               placeholder="Search items..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyPress}
-              className="flex-1 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              className="flex-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-white/50 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500/50"
             />
-            {/* Updated onClick to trigger our new handler */}
             <Button
               onClick={handleSearchClick}
-              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all active:scale-95"
             >
               Search
             </Button>
@@ -179,88 +178,121 @@ const AuctionList = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {activeAuctions.length === 0 && !loading ? (
-          <div className="col-span-full text-center py-20 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-            <div className="text-5xl mb-4">📦</div>
-            <h4 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              No auctions found
-            </h4>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">
-              Be the first to list an item or try different filters.
+          <div className="col-span-full flex flex-col items-center justify-center py-24 px-6 bg-white/30 dark:bg-slate-900/30 backdrop-blur-lg rounded-3xl border border-white/40 dark:border-slate-800/50 shadow-xl">
+            <div className="text-6xl mb-6 opacity-80 animate-bounce">📦</div>
+            {/* BlurText Animation for empty state */}
+            <BlurText 
+              text="No auctions found" 
+              className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3" 
+            />
+            <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md text-center">
+              Be the first to list an item or try different filters to discover amazing deals.
             </p>
-            <Button onClick={() => navigate("/create")}>List an Item</Button>
+            <Button 
+              onClick={() => navigate("/create")}
+              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full px-8 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
+            >
+              List an Item
+            </Button>
           </div>
         ) : (
           activeAuctions.map((item) => (
-            <Card
-              key={item.id}
-              className="group overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-all hover:shadow-md cursor-pointer"
-              onClick={() => navigate(`/auction/${item.id}`)}
-            >
-              <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="absolute inset-0 w-full h-full object-contain p-4 transition-transform group-hover:scale-105 duration-300"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 italic">
-                    No Image
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-slate-900/80 dark:bg-slate-100/90 text-white dark:text-slate-900 border-none shadow-sm capitalize text-[10px]"
-                  >
-                    {item.condition}
-                  </Badge>
-                </div>
-                {item.condition === "refurbished" && (
-                  <div className="absolute top-2 left-2">
-                    <Badge className="bg-amber-500 text-white border-none shadow-sm text-[10px]">
-                      ✨ Value
-                    </Badge>
-                  </div>
-                )}
-              </div>
+            /* Wrapped the entire card in BorderGlow component */
+            <BorderGlow key={item.id} className="h-full rounded-[24px]">
+              <Card
+                // Upgraded to a more frosted glass look with deeper rounded corners
+                className="group relative h-full flex flex-col overflow-hidden rounded-[24px] border border-white/60 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] cursor-pointer"
+                onClick={() => navigate(`/auction/${item.id}`)}
+              >
+                {/* 1. INSET IMAGE: Added p-3 to the wrapper so the image floats inside the card.
+                  2. Added internal border and inner shadow to the image container. 
+                */}
+                <div className="p-3 pb-0">
+                  <div className="relative h-52 w-full overflow-hidden rounded-2xl bg-white/60 dark:bg-slate-800/60 border border-white/50 dark:border-slate-700/50 shadow-sm">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        // Corrected to w-full object-cover with a smooth hover scale
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-slate-400 dark:text-slate-500 font-medium tracking-wide">
+                        No Image Available
+                      </div>
+                    )}
+                    
+                    {/* Inner shadow overlay to make text badges pop */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-black/0 opacity-80"></div>
 
-              <CardHeader className="p-4 pb-1">
-                <div className="text-[10px] uppercase font-bold text-primary dark:text-blue-400 tracking-wider mb-1">
-                  {item.category}
-                </div>
-                <CardTitle className="text-base line-clamp-1 font-bold">
-                  {item.title}
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="p-4 pt-0 flex-1 flex flex-col justify-between">
-                <div className="flex justify-between items-end mb-4">
-                  <div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
-                      Current Bid
-                    </p>
-                    <p className="text-xl font-black text-slate-900 dark:text-white">
-                      ₹{item.current_price}
-                    </p>
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <Badge className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white border border-white/50 dark:border-slate-700 shadow-sm capitalize font-bold text-[10px] px-3 py-1.5 rounded-full">
+                        {item.condition}
+                      </Badge>
+                    </div>
+                    {item.condition === "refurbished" && (
+                      <div className="absolute top-3 left-3">
+                        <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-none shadow-md font-bold text-[10px] px-3 py-1.5 rounded-full">
+                          ✨ Value
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 text-center border border-slate-100 dark:border-slate-800">
-                  <div className="text-red-600 dark:text-red-400 font-bold tabular-nums text-sm">
-                    <CountdownTimer targetDate={item.end_date} />
+                <CardHeader className="px-5 pt-4 pb-2 relative z-10">
+                  <div className="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400 tracking-wider mb-1">
+                    {item.category}
                   </div>
-                </div>
-              </CardContent>
+                  <CardTitle className="text-xl line-clamp-1 font-black text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">
+                    {item.title}
+                  </CardTitle>
+                </CardHeader>
 
-              <div className="p-4 pt-0">
-                <Button className="w-full font-semibold shadow-sm bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200">
-                  View Auction
-                </Button>
-              </div>
-            </Card>
+                <CardContent className="px-5 pb-5 pt-0 flex-1 flex flex-col justify-end relative z-10">
+                  {/* UNIFIED INFO BOX: Grouped the price and the timer into a single, 
+                    clean internal frosted container.
+                  */}
+                  <div className="bg-white/50 dark:bg-slate-950/30 backdrop-blur-md rounded-2xl p-4 border border-white/60 dark:border-slate-700/50 shadow-inner mt-2 flex flex-col gap-3">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">
+                          Current Bid
+                        </p>
+                        <div className="flex items-center text-3xl font-black text-slate-900 dark:text-white drop-shadow-sm">
+                          <span className="text-2xl mr-1 text-slate-400 dark:text-slate-500">₹</span>
+                          <CountUp 
+                            from={0} 
+                            to={parseFloat(item.current_price) || 0} 
+                            duration={1.5} 
+                            separator="," 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-[1px] w-full bg-slate-200/50 dark:bg-slate-700/50"></div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Ends in:
+                      </span>
+                      <div className="text-red-600 dark:text-red-400 font-bold tabular-nums text-sm tracking-wide">
+                        <CountdownTimer targetDate={item.end_date} />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+
+                <div className="px-5 pb-5 pt-0">
+                  <Button className="w-full font-bold text-md shadow-lg shadow-indigo-500/20 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white border-none rounded-xl py-6 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-indigo-500/40">
+                    Place Bid
+                  </Button>
+                </div>
+              </Card>
+            </BorderGlow>
           ))
         )}
       </div>
