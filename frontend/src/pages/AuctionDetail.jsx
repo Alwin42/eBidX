@@ -14,7 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Badge } from "@/components/ui/badge";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // React Bits Animations & UI
@@ -22,7 +22,7 @@ import BorderGlow from "@/components/ui/BorderGlow";
 import SplitText from "@/components/ui/SplitText";
 import BlurText from "@/components/ui/BlurText";
 import CountUp from "@/components/ui/CountUp";
-import DarkVeil from "@/components/ui/DarkVeil"; 
+
 
 const getBidIncrement = (price) => {
   if (price < 100) return 10;
@@ -162,9 +162,7 @@ const AuctionDetail = () => {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-950">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <DarkVeil stretch={true} />
-      </div>
+      
 
       {/* Expanded container for side-by-side layout */}
       <div className="container mx-auto pt-12 pb-24 px-4 max-w-6xl relative z-10">
@@ -243,7 +241,7 @@ const AuctionDetail = () => {
                             {endEarlyLoading ? "Ending..." : "Accept Bid & End"}
                           </Button>
                         )}
-                        <Button variant="destructive" onClick={handleDelete} className="font-bold h-12 rounded-xl" disabled={deleteLoading}>
+                        <Button variant="destructive" onClick={handleDelete} className="font-bold h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl" disabled={deleteLoading}>
                           {deleteLoading ? "Deleting..." : "Delete Auction"}
                         </Button>
                       </div>

@@ -66,64 +66,82 @@ const Login = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-md">
-      <Card className="shadow-lg border-0 bg-white dark:bg-slate-900 transition-colors">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center text-slate-900 dark:text-white">Sign In</CardTitle>
+    <div className="min-h-screen  px-4 py-12 flex items-center justify-center">
+      
+      <Card className="w-full max-w-md bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <CardHeader className="space-y-1 pb-6">
+          <CardTitle className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+            Sign In
+          </CardTitle>
         </CardHeader>
+        
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6 animate-in slide-in-from-top-2">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleManualLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+          <form onSubmit={handleManualLogin} className="space-y-5">
+            <div className="space-y-2 group">
+              <Label htmlFor="username" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">
+                Username
+              </Label>
               <Input
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                className="bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50 h-12"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                className="bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50 h-12"
               />
             </div>
 
-            <div className="flex justify-center py-2">
-              <ReCAPTCHA
-                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                onChange={handleCaptchaChange}
-                theme="dark"
-              />
+            <div className="flex justify-center py-4 transform-gpu transition-transform hover:scale-[1.02] duration-300">
+              <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800">
+                <ReCAPTCHA
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                  onChange={handleCaptchaChange}
+                  theme="dark" // Consider making this dynamic based on the user's system preference later!
+                />
+              </div>
             </div>
 
             <Button 
-              className="w-full h-12 text-lg font-semibold bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white mt-2" 
+              className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-1 transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" 
               type="submit"
               disabled={!captchaToken || loading}
             >
-              {loading ? "Signing in..." : "Login"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Signing in...
+                </div>
+              ) : (
+                "Login"
+              )}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center border-t dark:border-slate-800 p-4">
-          <p className="text-sm text-muted-foreground">
+        
+        <CardFooter className="justify-center border-t border-white/20 dark:border-slate-800/50 p-6 mt-2">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary dark:text-blue-400 hover:underline font-medium">
+            <Link to="/register" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline font-semibold transition-colors">
               Register here
             </Link>
           </p>

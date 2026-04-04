@@ -12,7 +12,7 @@ import BorderGlow from "@/components/ui/BorderGlow";
 import SplitText from "@/components/ui/SplitText";
 import BlurText from "@/components/ui/BlurText";
 import CountUp from "@/components/ui/CountUp";
-import DarkVeil from "@/components/ui/DarkVeil";
+
 
 const Dashboard = () => {
   const [data, setData] = useState({ bids: [], listings: [] });
@@ -120,9 +120,7 @@ const Dashboard = () => {
   return (
     <div className="relative min-h-screen w-full bg-slate-950 overflow-x-hidden">
       {/* Background Layer */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-30">
-        <DarkVeil stretch={true} />
-      </div>
+      
 
       <div className="container mx-auto px-4 py-12 relative z-10">
         <div className="mb-12">
@@ -170,7 +168,7 @@ const Dashboard = () => {
                       
                       {/* Inset Image */}
                       <div className="p-3 pb-0">
-                        <div className="relative h-40 w-full overflow-hidden rounded-xl bg-slate-800/50 border border-white/10">
+                        <div className="relative h-64 w-full overflow-hidden rounded-xl bg-slate-800/50 border border-white/10">
                           {imageUrl ? (
                             <img src={imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                           ) : (
@@ -252,7 +250,7 @@ const Dashboard = () => {
 
                 return (
                   <Card key={item.id} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/30 backdrop-blur-md hover:bg-slate-900/50 transition-all">
-                    <div className="h-32 w-full overflow-hidden bg-slate-800/40">
+                    <div className="h-64 w-auto overflow-hidden ">
                       {imageUrl && <img src={imageUrl} alt={item.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />}
                     </div>
                     <div className="p-4">
