@@ -13,6 +13,7 @@ import RequireAuth from "./components/RequireAuth";
 import Home from "./pages/Home";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Receipt from "./pages/Receipt";
+import Profile from "./pages/profile";
 
 function App() {
   return (
@@ -27,7 +28,14 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/auction/:id" element={<AuctionDetail />} />
               <Route path="/browse" element={<AuctionList />} />
-
+              <Route
+                path="/profile"
+                element={
+                  <RequireAuth>
+                    <Profile />
+                  </RequireAuth>
+                }
+              />
               <Route
                 path="/dashboard"
                 element={

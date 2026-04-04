@@ -15,7 +15,10 @@ from .views import (
     CreateStripeCheckoutSession,
     EndAuctionEarly,
     MarkAuctionPaid,
-    AuctionHomeSections,
+    AuctionHomeSections,UserProfileView,
+    SupportTicketListCreateView,
+    SupportTicketDetailView,
+    TicketResponseCreateView,
 )
 
 urlpatterns = [
@@ -37,10 +40,14 @@ urlpatterns = [
         MarkNotificationRead.as_view(),
         name="notification-read",
     ),
+    path("profile/", UserProfileView.as_view(), name="user-profile"),
     path("notifications/<int:pk>/delete/", DeleteNotification.as_view()),
     path("notifications/clear-all/", ClearAllNotifications.as_view()),
     path("create-payment-intent/", CreateStripeCheckoutSession.as_view()),
     path("auctions/<int:pk>/end/", EndAuctionEarly.as_view(), name="end-auction-early"),
     path("auctions/<int:pk>/mark-paid/", MarkAuctionPaid.as_view(), name="mark-paid"),
     path("home-sections/", AuctionHomeSections.as_view(), name="home-sections"),
+    path("support/tickets/", SupportTicketListCreateView.as_view(), name="ticket-list"),
+    path("support/tickets/<int:pk>/", SupportTicketDetailView.as_view(), name="ticket-detail"),
+    path("support/tickets/<int:pk>/reply/", TicketResponseCreateView.as_view(), name="ticket-reply"),
 ]

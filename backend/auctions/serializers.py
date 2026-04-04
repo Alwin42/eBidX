@@ -1,6 +1,33 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import AuctionItem, Bid, AuctionImage, WatchList, Notification
+from .models import AuctionItem, Bid, AuctionImage, SupportTicket, TicketResponse, WatchList, Notification
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "date_joined"]
+        read_only_fields = ["id", "username", "date_joined"]
+
+class TicketResponseSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source="sender.username", read_only=True)
+    is_admin = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TicketResponse
+        fields = ["id", "sender_name", "message", "is_admin", "created_at"]
+
+    def get_is_admin(self, obj):
+        return obj.sender.is_staff
+    
+class SupportTicketSerializer(serializers.ModelSerializer):
+    responses = TicketResponseSerializer(many=True, read_only=True)
+    user_name = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = SupportTicket
+        fields = ["id", "user_name", "subject", "description", "status", "created_at", "updated_at", "responses"]
+        read_only_fields = ["id", "status", "created_at", "updated_at", "responses"]
+
 
 
 class AuctionImageSerializer(serializers.ModelSerializer):
@@ -15,48 +42,26 @@ class AuctionItemSerializer(serializers.ModelSerializer):
     is_owner = serializers.SerializerMethodField()
     highest_bidder = serializers.SerializerMethodField()
     is_watched = serializers.SerializerMethodField()
+    bidding_history = serializers.SerializerMethodField()
 
     images = AuctionImageSerializer(many=True, read_only=True)
-
     uploaded_images = serializers.ListField(
-        child=serializers.ImageField(
-            max_length=1000000, allow_empty_file=False, use_url=False
-        ),
-        write_only=True,
-        required=False,
+        child=serializers.ImageField(max_length=1000000, allow_empty_file=False, use_url=False),
+        write_only=True, required=False,
     )
 
     class Meta:
         model = AuctionItem
         fields = [
-            "id",
-            "title",
-            "description",
-            "base_price",
-            "current_price",
-            "image",
-            "category",
-            "seller",
-            "condition",
-            "is_active",
-            "created_at",
-            "end_date",
-            "is_owner",
-            "images",
-            "uploaded_images",
-            "highest_bidder",
-            "is_watched",
-            "is_paid",
+            "id", "title", "description", "base_price", "current_price",
+            "image", "category", "seller", "condition", "is_active",
+            "created_at", "end_date", "is_owner", "images", "uploaded_images",
+            "highest_bidder", "is_watched", "is_paid", 
+            "bidding_history" 
         ]
         read_only_fields = [
-            "id",
-            "seller",
-            "current_price",
-            "highest_bidder",
-            "is_active",
-            "created_at",
-            "is_owner",
-            "images",
+            "id", "seller", "current_price", "highest_bidder", "is_active",
+            "created_at", "is_owner", "images", "bidding_history"
         ]
 
     def get_current_price(self, obj):
@@ -76,6 +81,9 @@ class AuctionItemSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return WatchList.objects.filter(user=request.user, auction=obj).exists()
         return False
+    def get_bidding_history(self, obj):
+        bids = obj.bids.all().order_by("-amount") 
+        return BidSerializer(bids, many=True).data
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop("uploaded_images", [])
