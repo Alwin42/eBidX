@@ -85,33 +85,37 @@ const CreateAuction = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 flex justify-center">
-      <Card className="w-full max-w-2xl shadow-lg border-0 bg-white dark:bg-slate-900 transition-colors">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center text-slate-900 dark:text-white">Sell an Item</CardTitle>
+    // Background gradient needed to make the glass effect visible
+    <div className="min-h-screen  px-4 py-12 flex justify-center items-center">
+      
+      <Card className="w-full max-w-2xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 animate-in fade-in zoom-in-95 duration-700">
+        <CardHeader className="pb-8">
+          <CardTitle className="text-4xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+            Sell an Item
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-6">
+            <Alert variant="destructive" className="mb-6 animate-in slide-in-from-top-2">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Item Title</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="title" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Item Title</Label>
               <Input
                 id="title"
                 name="title"
                 required
                 onChange={handleChange}
                 placeholder="e.g. Sony WH-1000XM4"
-                className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                className="bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="images">Upload Images</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="images" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Upload Images</Label>
               <Input
                 id="images"
                 type="file"
@@ -119,12 +123,12 @@ const CreateAuction = () => {
                 multiple
                 onChange={handleImageChange}
                 required
-                className="cursor-pointer bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 file:bg-slate-100 dark:file:bg-slate-800 file:text-slate-900 dark:file:text-slate-100"
+                className="cursor-pointer bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300 text-slate-900 dark:text-slate-100 file:bg-indigo-50 dark:file:bg-indigo-950 file:text-indigo-700 dark:file:text-indigo-300 file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900 file:transition-colors"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <div className="space-y-2 group">
+              <Label htmlFor="description" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Description</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -132,13 +136,13 @@ const CreateAuction = () => {
                 rows={4}
                 onChange={handleChange}
                 placeholder="Describe the condition and features..."
-                className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                className="bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50 resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="base_price">Starting Price (₹)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 group">
+                <Label htmlFor="base_price" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Starting Price (₹)</Label>
                 <Input
                   id="base_price"
                   type="number"
@@ -146,71 +150,71 @@ const CreateAuction = () => {
                   required
                   onChange={handleChange}
                   placeholder="1000"
-                  className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                  className="bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50"
                 />
               </div>
 
-              <div className="space-y-2 flex flex-col">
-                <Label>Condition</Label>
+              <div className="space-y-2 group">
+                <Label className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Condition</Label>
                 <Select 
                   value={formData.condition} 
                   onValueChange={(v) => handleSelectChange("condition", v)}
                 >
-                  <SelectTrigger className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary focus:outline-none">
+                  <SelectTrigger className="w-full bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm text-slate-900 dark:text-slate-100 border-white/20 dark:border-slate-800 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300">
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="used">Used</SelectItem>
-                    <SelectItem value="refurbished">Refurbished</SelectItem>
+                  <SelectContent className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                    <SelectItem value="new" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">New</SelectItem>
+                    <SelectItem value="used" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Used</SelectItem>
+                    <SelectItem value="refurbished" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Refurbished</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 flex flex-col">
-                <Label>Category</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 group">
+                <Label className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Category</Label>
                 <Select 
                   value={formData.category} 
                   onValueChange={(v) => handleSelectChange("category", v)}
                 >
-                  <SelectTrigger className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary focus:outline-none">
+                  <SelectTrigger className="w-full bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm text-slate-900 dark:text-slate-100 border-white/20 dark:border-slate-800 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100">
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="fashion">Fashion</SelectItem>
-                    <SelectItem value="home">Home</SelectItem>
-                    <SelectItem value="vehicles">Vehicles</SelectItem>
-                    <SelectItem value="toys">Toys</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                  <SelectContent className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+                    <SelectItem value="electronics" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Electronics</SelectItem>
+                    <SelectItem value="fashion" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Fashion</SelectItem>
+                    <SelectItem value="home" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Home</SelectItem>
+                    <SelectItem value="vehicles" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Vehicles</SelectItem>
+                    <SelectItem value="toys" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Toys</SelectItem>
+                    <SelectItem value="other" className="cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/50">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="end_date">Auction End Date</Label>
+              <div className="space-y-2 group">
+                <Label htmlFor="end_date" className="text-slate-700 dark:text-slate-300 transition-colors group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400">Auction End Date</Label>
                 <Input
                   id="end_date"
                   type="datetime-local"
                   name="end_date"
                   required
                   onChange={handleChange}
-                  className="w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
+                  className="w-full bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm border-white/20 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 hover:bg-white/80 dark:hover:bg-slate-900/80 transition-all duration-300 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/50"
                 />
-                <p className="text-xs text-muted-foreground">When does the bidding stop?</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 pl-1">When does the bidding stop?</p>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full py-6 text-lg font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200"
+              className="w-full py-6 mt-4 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white border-0 shadow-lg hover:shadow-indigo-500/25 hover:-translate-y-1 transition-all duration-300 active:scale-95"
               disabled={loading}
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   Processing...
                 </div>
               ) : (
