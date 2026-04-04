@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -17,9 +17,17 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
+  
+  // FIX 1: Create a Ref to safely control the ReCAPTCHA component
+  const recaptchaRef = useRef(null); 
 
   useEffect(() => {
-    localStorage.clear();
+    // FIX 2: Never use localStorage.clear() in a React component!
+    // It will wipe out theme settings and trigger Strict Mode race conditions.
+    // Only remove the exact authentication keys.
+    localStorage.removeItem("token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("username");
   }, []);
 
   const handleCaptchaChange = (token) => {
@@ -48,25 +56,39 @@ const Login = () => {
 
       const { token, user_id, username: returnedUsername } = res.data;
 
-      if (!token || !user_id) {
+      if (!token) {
         throw new Error("Invalid response from server");
       }
 
+      // Save credentials to local storage securely
       localStorage.setItem("token", token);
-      localStorage.setItem("user_id", user_id);
-      localStorage.setItem("username", returnedUsername);
+      if (user_id) localStorage.setItem("user_id", user_id);
+      if (returnedUsername) localStorage.setItem("username", returnedUsername);
 
+      // Navigate to the dashboard/home page
       navigate("/");
+      
     } catch (err) {
-      setError("Invalid username, password, or security check failed.");
-      if (window.grecaptcha) window.grecaptcha.reset();
+      // FIX 3: Extract the exact error message coming from Django DRF
+      // DRF often returns { non_field_errors: ["Unable to log in..."] } or { error: "..." }
+      const backendError = err.response?.data?.error 
+        || err.response?.data?.non_field_errors?.[0] 
+        || "Invalid username, password, or security check failed.";
+        
+      setError(backendError);
+      
+      // Safely reset the Captcha using the React Ref
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
       setCaptchaToken(null);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen  px-4 py-12 flex items-center justify-center">
+    <div className="min-h-screen px-4 py-12 flex items-center justify-center">
       
       <Card className="w-full max-w-md bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <CardHeader className="space-y-1 pb-6">
@@ -113,10 +135,12 @@ const Login = () => {
 
             <div className="flex justify-center py-4 transform-gpu transition-transform hover:scale-[1.02] duration-300">
               <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800">
+                {/* Attached the ref here */}
                 <ReCAPTCHA
+                  ref={recaptchaRef}
                   sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
                   onChange={handleCaptchaChange}
-                  theme="dark" // Consider making this dynamic based on the user's system preference later!
+                  theme="dark" 
                 />
               </div>
             </div>

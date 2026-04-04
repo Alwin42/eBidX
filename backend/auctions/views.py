@@ -10,7 +10,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from .models import AuctionItem, Bid, WatchList, Notification
+from .models import AuctionItem, Bid, SupportTicket, WatchList, Notification
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .serializers import (
@@ -18,7 +18,9 @@ from .serializers import (
     BidSerializer,
     BidWithItemSerializer,
     RegisterUserSerializer,
-    NotificationSerializer,
+    NotificationSerializer,UserProfileSerializer,
+    SupportTicketSerializer,
+    TicketResponseSerializer,
 )
 from django.contrib.auth.models import User
 from django.db.models import Count
@@ -58,7 +60,14 @@ def notify_user_dashboard(user_id, event_type, auction_id, new_price=None):
         },
     )
 
-
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    def get_object(self):
+        
+        return self.request.user
+    
 def verify_recaptcha(token):
     if not token:
         return False
@@ -293,7 +302,43 @@ class WatchlistList(APIView):
         )
         return Response(serializer.data)
 
+class SupportTicketListCreateView(generics.ListCreateAPIView):
+    serializer_class = SupportTicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        # Users can only see their own tickets
+        return SupportTicket.objects.filter(user=self.request.user).order_by("-updated_at")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SupportTicketDetailView(generics.RetrieveAPIView):
+    serializer_class = SupportTicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SupportTicket.objects.filter(user=self.request.user)
+
+
+class TicketResponseCreateView(generics.CreateAPIView):
+    serializer_class = TicketResponseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        ticket_id = self.kwargs.get("pk")
+        # Ensure the ticket belongs to the user
+        ticket = generics.get_object_or_404(SupportTicket, id=ticket_id, user=self.request.user)
+        
+        # When a user replies, we can automatically mark the ticket as "open" again
+        # so the admin knows there is a new message.
+        if ticket.status == 'closed':
+            ticket.status = 'open'
+            ticket.save()
+
+        serializer.save(ticket=ticket, sender=self.request.user)
+        
 class NotificationList(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
