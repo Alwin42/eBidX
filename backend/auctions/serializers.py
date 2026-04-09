@@ -28,12 +28,20 @@ class SupportTicketSerializer(serializers.ModelSerializer):
         fields = ["id", "user_name", "subject", "description", "status", "created_at", "updated_at", "responses"]
         read_only_fields = ["id", "status", "created_at", "updated_at", "responses"]
 
-
-
 class AuctionImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuctionImage
         fields = ["id", "image"]
+
+
+# --- FIX 1: Move BidSerializer UP so AuctionItemSerializer can use it ---
+class BidSerializer(serializers.ModelSerializer):
+    # FIX 2: Match the React variable name exacty ("bidder_username")
+    bidder_username = serializers.CharField(source="bidder.username", read_only=True)
+
+    class Meta:
+        model = Bid
+        fields = ["id", "bidder_username", "amount", "created_at"]
 
 
 class AuctionItemSerializer(serializers.ModelSerializer):
@@ -42,7 +50,9 @@ class AuctionItemSerializer(serializers.ModelSerializer):
     is_owner = serializers.SerializerMethodField()
     highest_bidder = serializers.SerializerMethodField()
     is_watched = serializers.SerializerMethodField()
-    bidding_history = serializers.SerializerMethodField()
+    
+    # FIX 3: Rename "bidding_history" to "bids" to match React
+    bids = serializers.SerializerMethodField()
 
     images = AuctionImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
@@ -57,11 +67,11 @@ class AuctionItemSerializer(serializers.ModelSerializer):
             "image", "category", "seller", "condition", "is_active",
             "created_at", "end_date", "is_owner", "images", "uploaded_images",
             "highest_bidder", "is_watched", "is_paid", 
-            "bidding_history" 
+            "bids" # Updated name here
         ]
         read_only_fields = [
             "id", "seller", "current_price", "highest_bidder", "is_active",
-            "created_at", "is_owner", "images", "bidding_history"
+            "created_at", "is_owner", "images", "bids" # Updated name here
         ]
 
     def get_current_price(self, obj):
@@ -81,9 +91,11 @@ class AuctionItemSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return WatchList.objects.filter(user=request.user, auction=obj).exists()
         return False
-    def get_bidding_history(self, obj):
-        bids = obj.bids.all().order_by("-amount") 
-        return BidSerializer(bids, many=True).data
+        
+    def get_bids(self, obj):
+        # We ensure they are ordered highest-to-lowest so the UI Leaderboard is correct
+        bids_queryset = obj.bids.all().order_by("-amount") 
+        return BidSerializer(bids_queryset, many=True).data
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop("uploaded_images", [])
@@ -100,14 +112,7 @@ class AuctionItemSerializer(serializers.ModelSerializer):
         return auction
 
 
-class BidSerializer(serializers.ModelSerializer):
-    bidder = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        model = Bid
-        fields = ["id", "bidder", "amount", "created_at"]
-
-
+# This remains for your Dashboard which expects "auction_item"
 class BidWithItemSerializer(serializers.ModelSerializer):
     auction_item = AuctionItemSerializer(source="auction", read_only=True)
 
@@ -138,4 +143,4 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = ["id", "message", "link", "is_read", "created_at"]
-        read_only_fields = ["id", "message", "link", "created_at"]
+        read_only_fields = ["id", "message", "link", "created_at"] 

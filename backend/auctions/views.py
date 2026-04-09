@@ -205,6 +205,18 @@ class PlaceBid(APIView):
 
         notify_user_dashboard(request.user.id, "new_bid", auction.id, amount)
 
+        # --- FIX: Broadcast the new bid to the live auction room ---
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"auction_{auction.id}",
+            {
+                "type": "auction_update",
+                "message": "New bid placed!",
+                "current_price": float(amount),
+                "highest_bidder": request.user.id,
+            }
+        )
+
         return Response(BidSerializer(bid).data, status=status.HTTP_201_CREATED)
 
 

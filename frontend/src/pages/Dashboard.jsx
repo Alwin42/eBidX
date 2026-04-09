@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // IMPORTED LINK
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,7 +103,7 @@ const Dashboard = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
+      <div className="flex justify-center items-center min-h-[400px] bg-slate-950">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -119,10 +119,23 @@ const Dashboard = () => {
 
   return (
     <div className="relative min-h-screen w-full bg-slate-950 overflow-x-hidden">
-      {/* Background Layer */}
       
+      {/* Top Navigation Bar with Profile Link */}
+      <div className="sticky top-0 z-50 w-full backdrop-blur-xl bg-slate-950/80 border-b border-white/5">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-end">
+          <Link to="/profile">
+            <Button 
+              variant="outline" 
+              className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-semibold transition-all shadow-sm rounded-full px-6"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+              My Profile
+            </Button>
+          </Link>
+        </div>
+      </div>
 
-      <div className="container mx-auto px-4 py-12 relative z-10">
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="mb-12">
           <div className="text-4xl font-black tracking-tight text-white italic drop-shadow-md">
             <SplitText text="MY DASHBOARD" delay={50} />
